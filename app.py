@@ -1,25 +1,5 @@
-#
-# import os
-# from flask import Flask
-#
-#
-# app = Flask(__name__)
-# app.config.from_object(os.environ['APP_SETTINGS'])
-#
-#
-# @app.route('/')
-# def hello():
-#     return "Hello World!"
-#
-#
-# @app.route('/<name>')
-# def hello_name(name):
-#     return "Hello {}!".format(name)
-#
-# if __name__ == '__main__':
-#     app.run()
 
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, session
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
@@ -27,13 +7,13 @@ from wtforms.validators import InputRequired, Email, Length
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_socketio import SocketIO, join_room, leave_room, send, emit
 import os
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 
-# app.config['SECRET_KEY'] = 'Thisissupposedtobesecret!'
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+socketio = SocketIO(app)
 Bootstrap(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -102,5 +82,17 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/algoview')
+@login_required
+def algoview():
+    # if room is not full
+    # room = session.get('room')
+    # join_room()
+    return render_template('algoview.html', user=current_user)
+
+@socketio.on('editor')
+def editor(json):
+    emit('editor', str(json))
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
