@@ -2,8 +2,13 @@ $(document).ready(() => {
 
     let editor = ace.edit('editor');
     let editorTwo = ace.edit('editorTwo');
-    let socket = io.connect('http://127.0.0.1:5000/algoview');
-
+    let socket = io.connect('http://' + document.domain + ':' + location.port + '/algoview');
+    socket.on('connect', () => {
+        socket.send('user connected')
+        socket.emit('join', {
+            data: 'wow'
+        });
+    })
     editor.setTheme('ace/theme/monokai');
     editorTwo.setTheme('ace/theme/monokai');
     editorTwo.setReadOnly(true);
@@ -17,7 +22,11 @@ $(document).ready(() => {
         }
     });
 
-    socket.on('editor', (data)=>{
+    socket.on('message', (data)=>{
+        console.log(data);
+    })
+
+    socket.on('editor', (data) => {
         data = data.replace(/'/g, '"')
         let x = JSON.parse(data)
         editorTwo.setValue(x.data);
@@ -29,4 +38,12 @@ $(document).ready(() => {
     $('#submitButton').click(() => {
         console.log(editor.getValue());
     });
+
+    function leave_room() {
+        socket.emit('left', {}, function() {
+            socket.disconnect();
+            // go back to the login page
+            window.location.href = "{{ url_for('main.index') }}";
+        });
+    }
 });

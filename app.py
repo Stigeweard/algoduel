@@ -53,7 +53,14 @@ def login():
         if user:
             if check_password_hash(user.password, form.password.data):
                 login_user(user, remember=form.remember.data)
-                return redirect(url_for('dashboard'))
+                session['user'] = current_user.username
+                session['room'] = 'first'
+                room = session.get('room')
+                user = session.get('user')
+                print('in login route')
+                print(room)
+                print(user)
+                return redirect(url_for('.dashboard'))
         return '<h1>Invalid username or password</h1>'
     return render_template('login.html', form=form)
 
@@ -82,43 +89,37 @@ def logout():
 @app.route('/algoview')
 @login_required
 def algoview():
-    session['user'] = current_user.username
-    session['room'] = 'first'
-    if True:
-        return render_template('algoview.html', user=current_user)
-    return render_template('algoview.html', user=current_user)
+    room = session.get('room')
+    user = session.get('user')
+    return render_template('algoview.html', user=user, room=room)
 
 # Socket stuff
-@socketio.on('message')
+@socketio.on('message', namespace='/algoview')
 def message(msg):
     print(msg)
 
-@socketio.on('connected')
-def connected(msg):
-    print(msg)
+# @socketio.on('disconnect', namespace='/algoview')
+# def disconnect(msg):
+#     print(msg)
 
 @socketio.on('editor', namespace='/algoview')
 def editor(json):
-    print(json)
     room = session.get('room')
     user = session.get('user')
-    print(room)
-    print(user)
-    emit('editor', str(json))
+    emit('editor', str(json), broadcast=True, include_self=False)
 
-@socketio.on('join')
-def on_join(data):
+@socketio.on('join', namespace='/algoview')
+def join(data):
     room = session.get('room')
     user = session.get('user')
     join_room(room)
     send('somebody has entered the room.', room=room)
 
-@socketio.on('leave')
+@socketio.on('leave', namespace='/algoview')
 def on_leave(data):
-    username = data['username']
-    room = data['room']
+    room = session.get('room')
     leave_room(room)
-    send(username + ' has left the room.', room=room)
+    send('someone has left the room.', room=room)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
