@@ -1,5 +1,5 @@
 
-from flask import Flask, render_template, redirect, url_for, session
+from flask import Flask, render_template, redirect, url_for, session, request
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
@@ -48,7 +48,6 @@ def index():
 def login():
     # instantiating a form, passing it into the template with form=form
     form = LoginForm()
-
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
@@ -61,20 +60,18 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = RegisterForm()
-
     if form.validate_on_submit():
         hashed_password = generate_password_hash(form.password.data, method='sha256')
         new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
-
     return render_template('signup.html', form=form)
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', name=current_user.username)
+    return render_template('dashboard.html', user=current_user)
 
 @app.route('/logout')
 @login_required
@@ -85,14 +82,43 @@ def logout():
 @app.route('/algoview')
 @login_required
 def algoview():
-    # if room is not full
-    # room = session.get('room')
-    # join_room()
+    session['user'] = current_user.username
+    session['room'] = 'first'
+    if True:
+        return render_template('algoview.html', user=current_user)
     return render_template('algoview.html', user=current_user)
 
-@socketio.on('editor')
+# Socket stuff
+@socketio.on('message')
+def message(msg):
+    print(msg)
+
+@socketio.on('connected')
+def connected(msg):
+    print(msg)
+
+@socketio.on('editor', namespace='/algoview')
 def editor(json):
+    print(json)
+    room = session.get('room')
+    user = session.get('user')
+    print(room)
+    print(user)
     emit('editor', str(json))
+
+@socketio.on('join')
+def on_join(data):
+    room = session.get('room')
+    user = session.get('user')
+    join_room(room)
+    send('somebody has entered the room.', room=room)
+
+@socketio.on('leave')
+def on_leave(data):
+    username = data['username']
+    room = data['room']
+    leave_room(room)
+    send(username + ' has left the room.', room=room)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

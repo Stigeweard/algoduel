@@ -15,22 +15,8 @@ Dashboard
   src="https://code.jquery.com/jquery-3.2.1.min.js"
   integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
   crossorigin="anonymous"></script>
-<script type="text/javascript" charset="utf-8">
-    $(document).ready(function(){
+<script src="{{url_for('.static', filename='dashboard.js')}}" charset="utf-8"></script>
 
-        let socket = io.connect('http://127.0.0.1:5000');
-
-        socket.on('connect', ()=>{
-            socket.send('User has connected!');
-        })
-
-        socket.on('message', (msg)=>{
-            $('.list').append(`<li>${msg}</li>`);
-            console.log('received message!', msg);
-        })
-
-    })
-</script>
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -59,12 +45,12 @@ Dashboard
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            <h1 class="page-header">Welcome, {{ name }}</h1>
+            <h1 class="page-header">Welcome, {{ user.username }}</h1>
             <h2 class="sub-header">Rooms</h2>
         </div>
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
             <ul>
-                <li><a href="{{ url_for('algoview') }}">Join room</a></li>
+                <li><a id="room" href="{{ url_for('algoview') }}">Join room</a></li>
             </ul>
         </div>
     </div>
