@@ -60,11 +60,6 @@ def login():
                 login_user(user, remember=form.remember.data)
                 session['user'] = current_user.username
                 session['room'] = 'first'
-                room = session.get('room')
-                user = session.get('user')
-                print('in login route')
-                print(room)
-                print(user)
                 return redirect(url_for('.dashboard'))
         return '<h1>Invalid username or password</h1>'
     return render_template('login.html', form=form)
@@ -83,29 +78,25 @@ def signup():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', user=current_user)
+    return render_template('dashboard.html')
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
+    session.pop('user', None)
     return redirect(url_for('index'))
 
 @app.route('/algoview')
 @login_required
 def algoview():
     room = session.get('room')
-    user = session.get('user')
-    return render_template('algoview.html', user=user, room=room)
+    return render_template('algoview.html', room=room)
 
 # Socket stuff
 @socketio.on('message', namespace='/algoview')
 def message(msg):
     print(msg)
-
-# @socketio.on('disconnect', namespace='/algoview')
-# def disconnect(msg):
-#     print(msg)
 
 @socketio.on('editor', namespace='/algoview')
 def editor(json):
@@ -118,32 +109,31 @@ def submission(json):
     # TODO: HERE IS WHERE I WOULD MAKE A VARIABLE FOR FUNCTION NAME WITH SOME TEXT PARSING
     # TODO: HERE IS WHERE I WILL LOAD ASSOCIATED TEST/ALGO
     room = session.get('room')
-    user = session.get('user')
 
     # TESTING SYNTAX ERRORS
     try:
         # THIS EXECUTES USERS PYTHON CODE AND ADDS FUNCTION TO GLOBAL SCOPE
         exec(json['data'], globals())
     except (SyntaxError, NameError) as e:
-        emit('incorrect', {'user': user, 'error': str(e), 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+        emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'wow lol '+ current_user.username + ' is rly bad at this'}, broadcast=True, room=room)
     else:
         # TESTING CORRECT FUNCTION NAME
         try:
             multiply
         except NameError as e:
-            emit('incorrect', {'user': user, 'error': str(e), 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+            emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'wow lol '+ current_user.username + ' is rly bad at this'}, broadcast=True, room=room)
         else:
             # TESTING CORRECT FUNCTION PARAMETERS
             try:
                 multiply(1,9)
             except TypeError as e:
-                emit('incorrect', {'user': user, 'error': str(e), 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+                emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'wow lol '+ current_user.username + ' is rly bad at this'}, broadcast=True, room=room)
             else:
                 # TESTING FOR CORRECT RESULT
                 if multiply(1,9) == 9 and multiply(15123, 424) == 6412152:
-                    emit('worked', {'user': user, 'message':'omg '+ user +' dun did it!'}, broadcast=True, room=room)
+                    emit('worked', {'user': current_user.username, 'message':'omg '+ current_user.username +' dun did it!'}, broadcast=True, room=room)
                 else:
-                    emit('incorrect', {'user': user, 'error': user+"'s function did not return the correct value", 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+                    emit('incorrect', {'user': current_user.username, 'error':current_user.username+"'s function did not return the correct value", 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
 
 
 @socketio.on('join', namespace='/algoview')
@@ -160,4 +150,4 @@ def on_leave(data):
     send('someone has left the room.', room=room)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, 'localhost', debug=True)

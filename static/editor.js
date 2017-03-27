@@ -27,15 +27,16 @@ $(document).ready(() => {
     })
 
     socket.on('editor', (data) => {
-        data = data.replace(/'/g, '"')
-        let x = JSON.parse(data)
+        // TODO: MAKE STRINGS WORK
+        data = data.replace(/'/g, '"');
+        let x = JSON.parse(data);
         editorTwo.setValue(x.data);
     });
 
     socket.on('worked', (data)=>{
         $('#attempt').text(data.message);
         $('#attempt').css('color', 'green');
-        $('#error').text('')
+        $('#error').text('');
         editor.setReadOnly(true);
     })
 
@@ -51,14 +52,18 @@ $(document).ready(() => {
     $('#submitButton').click(() => {
         console.log(editor.getValue());
         socket.emit('submission',{
-            data: editor.getValue()
+            data: editor.getValue(),
+            username: $('#username').text()
         })
     });
+
+    $('#logout').click(leave_room);
 
     function leave_room() {
         socket.emit('left', {}, function() {
             socket.disconnect();
             // go back to the login page
+            console.log('left room');
             window.location.href = "{{ url_for('main.index') }}";
         });
     }
