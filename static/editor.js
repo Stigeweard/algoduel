@@ -32,11 +32,27 @@ $(document).ready(() => {
         editorTwo.setValue(x.data);
     });
 
-    editor.getSession().setMode('ace/mode/javascript');
-    editorTwo.getSession().setMode('ace/mode/javascript');
+    socket.on('worked', (data)=>{
+        $('#attempt').text(data.message);
+        $('#attempt').css('color', 'green');
+        $('#error').text('')
+        editor.setReadOnly(true);
+    })
+
+    socket.on('incorrect', (data)=>{
+        $('#attempt').text(data.message);
+        $('#attempt').css('color', 'red');
+        $('#error').text(data.error);
+    })
+
+    editor.getSession().setMode('ace/mode/python');
+    editorTwo.getSession().setMode('ace/mode/python');
 
     $('#submitButton').click(() => {
         console.log(editor.getValue());
+        socket.emit('submission',{
+            data: editor.getValue()
+        })
     });
 
     function leave_room() {

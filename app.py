@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, redirect, url_for, session, request
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
@@ -25,6 +24,12 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(15), unique=True)
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(80))
+
+# TODO: HERE IS WHERE ILL ADD THE CONNECTIONS TO DB WHEN SOMEONE JOINS A room
+# TODO: INSTEAD OF STATE, DO ROOM
+# class State(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     connections = db.Column(db.Integer)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -106,7 +111,40 @@ def message(msg):
 def editor(json):
     room = session.get('room')
     user = session.get('user')
-    emit('editor', str(json), broadcast=True, include_self=False)
+    emit('editor', str(json), broadcast=True, include_self=False, room=room)
+
+@socketio.on('submission', namespace='/algoview')
+def submission(json):
+    # TODO: HERE IS WHERE I WOULD MAKE A VARIABLE FOR FUNCTION NAME WITH SOME TEXT PARSING
+    # TODO: HERE IS WHERE I WILL LOAD ASSOCIATED TEST/ALGO
+    room = session.get('room')
+    user = session.get('user')
+
+    # TESTING SYNTAX ERRORS
+    try:
+        # THIS EXECUTES USERS PYTHON CODE AND ADDS FUNCTION TO GLOBAL SCOPE
+        exec(json['data'], globals())
+    except (SyntaxError, NameError) as e:
+        emit('incorrect', {'user': user, 'error': str(e), 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+    else:
+        # TESTING CORRECT FUNCTION NAME
+        try:
+            multiply
+        except NameError as e:
+            emit('incorrect', {'user': user, 'error': str(e), 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+        else:
+            # TESTING CORRECT FUNCTION PARAMETERS
+            try:
+                multiply(1,9)
+            except TypeError as e:
+                emit('incorrect', {'user': user, 'error': str(e), 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+            else:
+                # TESTING FOR CORRECT RESULT
+                if multiply(1,9) == 9 and multiply(15123, 424) == 6412152:
+                    emit('worked', {'user': user, 'message':'omg '+ user +' dun did it!'}, broadcast=True, room=room)
+                else:
+                    emit('incorrect', {'user': user, 'error': user+"'s function did not return the correct value", 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+
 
 @socketio.on('join', namespace='/algoview')
 def join(data):
@@ -115,7 +153,7 @@ def join(data):
     join_room(room)
     send('somebody has entered the room.', room=room)
 
-@socketio.on('leave', namespace='/algoview')
+@socketio.on('left', namespace='/algoview')
 def on_leave(data):
     room = session.get('room')
     leave_room(room)

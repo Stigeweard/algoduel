@@ -126,8 +126,10 @@ body {
     margin: 15% auto;
 }*/
 
-#submitButton {
+.buttonBox {
     position: absolute;
+    bottom: 10px;
+    margin: 5% auto;
 }
 
 #editor {
@@ -148,4 +150,8 @@ body {
     left: 50%;
     right: 0;
     width: 40%;
+}
+
+.instructions {
+    margin: 0 15%;
 }
