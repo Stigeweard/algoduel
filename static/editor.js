@@ -34,15 +34,16 @@ $(document).ready(() => {
     });
 
     socket.on('worked', (data)=>{
+        $('#status').removeClass('alert-danger');
+        $('#status').addClass('alert-success');
         $('#attempt').text(data.message);
-        $('#attempt').css('color', 'green');
         $('#error').text('');
         editor.setReadOnly(true);
     })
 
     socket.on('incorrect', (data)=>{
+        $('#status').addClass('alert-danger');
         $('#attempt').text(data.message);
-        $('#attempt').css('color', 'red');
         $('#error').text(data.error);
     })
 
