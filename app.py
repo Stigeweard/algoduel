@@ -115,25 +115,25 @@ def submission(json):
         # THIS EXECUTES USERS PYTHON CODE AND ADDS FUNCTION TO GLOBAL SCOPE
         exec(json['data'], globals())
     except (SyntaxError, NameError) as e:
-        emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'wow lol '+ current_user.username + ' is rly bad at this'}, broadcast=True, room=room)
+        emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'Uh oh.. '+ current_user.username + ' got it wrong'}, broadcast=True, room=room)
     else:
         # TESTING CORRECT FUNCTION NAME
         try:
             multiply
         except NameError as e:
-            emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'wow lol '+ current_user.username + ' is rly bad at this'}, broadcast=True, room=room)
+            emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'Uh oh.. '+ current_user.username + ' got it wrong'}, broadcast=True, room=room)
         else:
             # TESTING CORRECT FUNCTION PARAMETERS
             try:
                 multiply(1,9)
             except TypeError as e:
-                emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'wow lol '+ current_user.username + ' is rly bad at this'}, broadcast=True, room=room)
+                emit('incorrect', {'user': current_user.username, 'error': str(e), 'message':'Uh oh.. '+ current_user.username + ' got it wrong'}, broadcast=True, room=room)
             else:
                 # TESTING FOR CORRECT RESULT
                 if multiply(1,9) == 9 and multiply(15123, 424) == 6412152:
-                    emit('worked', {'user': current_user.username, 'message':'omg '+ current_user.username +' dun did it!'}, broadcast=True, room=room)
+                    emit('worked', {'user': current_user.username, 'message':'Wow! '+ current_user.username +' totally nailed it!'}, broadcast=True, room=room)
                 else:
-                    emit('incorrect', {'user': current_user.username, 'error':current_user.username+"'s function did not return the correct value", 'message':'wow lol '+ user + ' is rly bad at this'}, broadcast=True, room=room)
+                    emit('incorrect', {'user': current_user.username, 'error':current_user.username+"'s function did not return the correct value", 'message':'Uh oh.. '+ user + ' got it wrong'}, broadcast=True, room=room)
 
 
 @socketio.on('join', namespace='/algoview')
